@@ -1,0 +1,1189 @@
+-- Niron Hub Elite - The Ultimate Enhanced Script Hub
+-- Created by JayzaAlt, upgraded version with advanced features
+
+-- Performance optimization
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+-- Config variables
+local CONFIG = {
+    UI_THEME = "Midnight", -- Default theme
+    USE_ANIMATIONS = true,
+    ANIMATION_SPEED = 0.4,
+    BUTTON_STYLE = "Modern",
+    SAVE_HISTORY = true,
+    HIDE_ON_FOCUS_LOST = false,
+    AUTO_RECOVERY = true,
+    KEYBIND = Enum.KeyCode.RightControl,
+    BLUR_BACKGROUND = true,
+    LOG_EXECUTION = true
+}
+
+-- [[]]
+local LoadingScreen = Instance.new("ScreenGui")
+LoadingScreen.Name = "NironLoading"
+LoadingScreen.Parent = game.CoreGui
+LoadingScreen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+LoadingScreen.ResetOnSpawn = false
+
+LoadingScreen.Enabled = false
+
+local Background = Instance.new("Frame")
+Background.Name = "Background"
+Background.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+Background.Position = UDim2.new(0, 0, 0, 0)
+Background.Size = UDim2.new(1, 0, 1, 0)
+Background.Parent = LoadingScreen
+
+local LoadingIcon = Instance.new("ImageLabel")
+LoadingIcon.Name = "LoadingIcon"
+LoadingIcon.BackgroundTransparency = 1
+LoadingIcon.Position = UDim2.new(0.5, -50, 0.5, -50)
+LoadingIcon.Size = UDim2.new(0, 100, 0, 100)
+LoadingIcon.Image = "rbxassetid://8772189152"
+LoadingIcon.Parent = Background
+
+local LoadingText = Instance.new("TextLabel")
+LoadingText.Name = "LoadingText"
+LoadingText.BackgroundTransparency = 1
+LoadingText.Position = UDim2.new(0, 0, 0.6, 0)
+LoadingText.Size = UDim2.new(1, 0, 0, 30)
+LoadingText.Font = Enum.Font.GothamBold
+LoadingText.Text = "LOADING NIRON HUB ELITE"
+LoadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadingText.TextSize = 22
+LoadingText.Parent = Background
+
+local StatusText = Instance.new("TextLabel")
+StatusText.Name = "StatusText"
+StatusText.BackgroundTransparency = 1
+StatusText.Position = UDim2.new(0, 0, 0.65, 0)
+StatusText.Size = UDim2.new(1, 0, 0, 20)
+StatusText.Font = Enum.Font.Gotham
+StatusText.Text = "Initializing..."
+StatusText.TextColor3 = Color3.fromRGB(200, 200, 200)
+StatusText.TextSize = 14
+StatusText.Parent = Background
+
+local ProgressBackground = Instance.new("Frame")
+ProgressBackground.Name = "ProgressBackground"
+ProgressBackground.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+ProgressBackground.BorderSizePixel = 0
+ProgressBackground.Position = UDim2.new(0.3, 0, 0.7, 0)
+ProgressBackground.Size = UDim2.new(0.4, 0, 0, 10)
+ProgressBackground.Parent = Background
+
+local ProgressBar = Instance.new("Frame")
+ProgressBar.Name = "ProgressBar"
+ProgressBar.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
+ProgressBar.BorderSizePixel = 0
+ProgressBar.Size = UDim2.new(0, 0, 1, 0)
+ProgressBar.Parent = ProgressBackground
+
+
+-- Update loading progress
+local function UpdateLoadingStatus(status, progress)
+    StatusText.Text = status
+    TweenService:Create(
+        ProgressBar, 
+        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Size = UDim2.new(progress, 0, 1, 0)}
+    ):Play()
+end
+
+-- First load Rayfield library with better error handling
+UpdateLoadingStatus("Loading UI Library...", 0.1)
+
+local Rayfield
+local success, result = pcall(function()
+    return loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+end)
+
+if success then
+    Rayfield = result
+else
+    -- Try alternate source if first one fails
+    success, result = pcall(function()
+        return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+    end)
+    
+    if success then
+        Rayfield = result
+    else
+        -- Try another fallback
+        success, result = pcall(function()
+            return loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-Interface/CustomFIeld/main/RayField.lua'))()
+        end)
+        
+        if success then
+            Rayfield = result
+        else
+            UpdateLoadingStatus("Error: Failed to load UI library", 1)
+            task.wait(2)
+            -- Create a simple error message if all attempts fail
+            local ErrorGui = Instance.new("ScreenGui")
+            ErrorGui.Name = "NironError"
+            ErrorGui.Parent = game.CoreGui
+            
+            local ErrorFrame = Instance.new("Frame")
+            ErrorFrame.Name = "ErrorFrame"
+            ErrorFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            ErrorFrame.BorderSizePixel = 0
+            ErrorFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+            ErrorFrame.Size = UDim2.new(0, 300, 0, 200)
+            ErrorFrame.Parent = ErrorGui
+            
+            local ErrorTitle = Instance.new("TextLabel")
+            ErrorTitle.Name = "ErrorTitle"
+            ErrorTitle.BackgroundTransparency = 1
+            ErrorTitle.Position = UDim2.new(0, 0, 0, 20)
+            ErrorTitle.Size = UDim2.new(1, 0, 0, 30)
+            ErrorTitle.Font = Enum.Font.GothamBold
+            ErrorTitle.Text = "Niron Hub Error"
+            ErrorTitle.TextColor3 = Color3.fromRGB(255, 100, 100)
+            ErrorTitle.TextSize = 20
+            ErrorTitle.Parent = ErrorFrame
+            
+            local ErrorMessage = Instance.new("TextLabel")
+            ErrorMessage.Name = "ErrorMessage"
+            ErrorMessage.BackgroundTransparency = 1
+            ErrorMessage.Position = UDim2.new(0, 10, 0, 60)
+            ErrorMessage.Size = UDim2.new(1, -20, 0, 80)
+            ErrorMessage.Font = Enum.Font.Gotham
+            ErrorMessage.Text = "Failed to load UI library. Please try again later or contact support."
+            ErrorMessage.TextColor3 = Color3.fromRGB(255, 255, 255)
+            ErrorMessage.TextSize = 14
+            ErrorMessage.TextWrapped = true
+            ErrorMessage.Parent = ErrorFrame
+            
+            local CloseButton = Instance.new("TextButton")
+            CloseButton.Name = "CloseButton"
+            CloseButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            CloseButton.BorderSizePixel = 0
+            CloseButton.Position = UDim2.new(0.5, -75, 0, 150)
+            CloseButton.Size = UDim2.new(0, 150, 0, 30)
+            CloseButton.Font = Enum.Font.GothamSemibold
+            CloseButton.Text = "Close"
+            CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            CloseButton.TextSize = 16
+            CloseButton.Parent = ErrorFrame
+            
+            CloseButton.MouseButton1Click:Connect(function()
+                ErrorGui:Destroy()
+            end)
+            
+            return
+        end
+    end
+end
+
+UpdateLoadingStatus("Initializing Hub...", 0.25)
+
+-- Script Execution Utilities
+local ExecutionLogger = {}
+ExecutionLogger.History = {}
+
+function ExecutionLogger:Log(scriptName, scriptContent, success)
+    if CONFIG.LOG_EXECUTION then
+        table.insert(self.History, {
+            name = scriptName,
+            time = os.time(),
+            success = success
+        })
+        
+        -- Only keep the last 100 entries
+        if #self.History > 100 then
+            table.remove(self.History, 1)
+        end
+    end
+end
+
+function ExecutionLogger:GetHistory()
+    return self.History
+end
+
+-- Security check function
+local function PerformSecurityCheck(scriptContent)
+    -- Simple security checker
+    local potentiallyHarmful = false
+    local dangerousStrings = {
+        "game:Shutdown",
+        "game:GetService('Players').LocalPlayer:Kick",
+        "for i = 1, 1000000 do",
+        "while true do",
+        "DeleteFile",
+        "HttpPost"
+    }
+    
+    for _, checkString in ipairs(dangerousStrings) do
+        if string.find(scriptContent, checkString) then
+            potentiallyHarmful = true
+            break
+        end
+    end
+    
+    return potentiallyHarmful
+end
+
+-- Safe execution wrapper
+local function SafeExecute(scriptName, scriptCode)
+    -- Update loading text
+    StatusText.Text = "Executing: " .. scriptName
+    
+    -- Check if code looks potentially harmful
+    local isHarmful = PerformSecurityCheck(scriptCode)
+    
+    if isHarmful then
+        Rayfield:Notify({
+            Title = "⚠️ Security Warning",
+            Content = "This script contains potentially harmful code. Execute anyway?",
+            Duration = 10,
+            Image = 4914902889,
+            Actions = {
+                Confirm = {
+                    Name = "Execute Anyway",
+                    Callback = function()
+                        -- Execute with error handling
+                        local success, err = pcall(function()
+                            loadstring(scriptCode)()
+                        end)
+                        
+                        if success then
+                            Rayfield:Notify({
+                                Title = "Executed Successfully",
+                                Content = "Running: " .. scriptName,
+                                Duration = 3,
+                                Image = 4483362458
+                            })
+                            ExecutionLogger:Log(scriptName, scriptCode, true)
+                        else
+                            Rayfield:Notify({
+                                Title = "Execution Failed",
+                                Content = "Error: " .. tostring(err):sub(1, 100),
+                                Duration = 5,
+                                Image = 4914902889
+                            })
+                            ExecutionLogger:Log(scriptName, scriptCode, false)
+                        end
+                    end
+                },
+                Cancel = {
+                    Name = "Cancel",
+                    Callback = function()
+                        Rayfield:Notify({
+                            Title = "Execution Cancelled",
+                            Content = "Script was not executed for safety reasons",
+                            Duration = 3,
+                            Image = 4914902889
+                        })
+                    end
+                }
+            }
+        })
+    else
+        -- Execute with error handling
+        local success, err = pcall(function()
+            loadstring(scriptCode)()
+        end)
+        
+        if success then
+            Rayfield:Notify({
+                Title = "Executed Successfully",
+                Content = "Running: " .. scriptName,
+                Duration = 3,
+                Image = 4483362458
+            })
+            ExecutionLogger:Log(scriptName, scriptCode, true)
+        else
+            Rayfield:Notify({
+                Title = "Execution Failed",
+                Content = "Error: " .. tostring(err):sub(1, 100),
+                Duration = 5,
+                Image = 4914902889
+            })
+            ExecutionLogger:Log(scriptName, scriptCode, false)
+        end
+    end
+end
+
+-- Function to create enhanced buttons with hover effects and execution tracking
+local function CreateEnhancedScriptButton(tab, name, scriptCode, desc, category)
+    local description = desc or "Click to execute this script"
+    
+    -- Create button with better styling
+    local button = tab:CreateButton({
+        Name = name,
+        Info = description,
+        Interact = 'Execute',
+        Callback = function()
+            SafeExecute(name, scriptCode)
+        end
+    })
+    
+    -- Track button in favorites system
+    return button
+end
+
+-- Function to create categories
+local function CreateCategory(tab, categoryName)
+    return tab:CreateSection(categoryName)
+end
+
+UpdateLoadingStatus("Setting up main interface...", 0.4)
+
+-- Create the main window with enhanced options
+local Window = Rayfield:CreateWindow({
+    Name = "Niron Hub Elite",
+    LoadingTitle = "Niron Hub Elite - Ultimate Script Collection",
+    LoadingSubtitle = "by JayzaAlt | Enhanced Version",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "NironHubElite",
+        FileName = "Configuration"
+    },
+    Discord = {
+        Enabled = true,
+        Invite = "nironhub",
+        RememberJoins = true
+    },
+    KeySystem = true,
+    KeySettings = {
+        Title = "Niron Hub Elite | Authentication",
+        Subtitle = "Enter your access key",
+        Note = "Join our Discord for a free key",
+        FileName = "NironKey",
+        SaveKey = true,
+        GrabKeyFromSite = false,
+        Key = {"NIRONELITE", "PREMIUM2025", "DEVELOPER"}
+    }
+})
+
+UpdateLoadingStatus("Creating main tabs...", 0.5)
+
+-- Create tabs with enhanced icons
+local HomeTab = Window:CreateTab("Home", 9792462652)
+local AdminTab = Window:CreateTab("Admin Tools", 9648679072)
+local GuisTab = Window:CreateTab("GUIs", 9734606073)
+local GunsTab = Window:CreateTab("Guns", 9734655235)
+local FunnyTab = Window:CreateTab("Funny", 9734687798)
+local UniversalTab = Window:CreateTab("Universal", 9734692353)
+local GearTab = Window:CreateTab("Gear", 9734689496)
+local CharacterTab = Window:CreateTab("Character", 9734686607)
+local FavoritesTab = Window:CreateTab("Favorites", 9731324023)
+local SettingsTab = Window:CreateTab("Settings", 9734695410)
+local CreditsTab = Window:CreateTab("Info", 9734688546)
+
+-- Add welcome/home tab
+HomeTab:CreateSection("Welcome to Niron Hub Elite")
+
+HomeTab:CreateParagraph({
+    Title = "🌟 PREMIUM ACCESS GRANTED 🌟",
+    Content = "Welcome to Niron Hub Elite - The most comprehensive script collection for Roblox. This hub features hundreds of carefully curated scripts organized into categories for easy access."
+})
+
+-- Featured scripts section
+HomeTab:CreateSection("Featured Scripts")
+
+-- Create script counters for stats
+local scriptCounts = {
+    Admin = 11,
+    GUIs = 16,
+    Guns = 13,
+    Funny = 12,
+    Universal = 10,
+    Gear = 11,
+    Character = 10,
+    Total = 83
+}
+
+-- Add featured scripts with thumbnails
+local featuredScripts = {
+    {name = "Admin GUI", desc = "Most reliable admin commands", tab = AdminTab, script = 'game:GetObjects("rbxassetid://166330068")[1].Parent = game.Players.LocalPlayer.PlayerGui'},
+    {name = "Ro-Xploit v5", desc = "Advanced admin with many features", tab = AdminTab, script = 'loadstring(game:GetObjects("rbxassetid://288646117")[1].Source)()'},
+    {name = "Telekinesis", desc = "Move objects with your mind", tab = UniversalTab, script = 'loadstring(game:GetObjects("rbxassetid://287147018")[1].Source)()'},
+    {name = "AK-47", desc = "Classic assault rifle", tab = GunsTab, script = 'game:GetObjects("rbxassetid://149948769")[1].Parent=game.Players.LocalPlayer.Backpack'}
+}
+
+for _, script in ipairs(featuredScripts) do
+    HomeTab:CreateButton({
+        Name = "⭐ " .. script.name,
+        Info = script.desc,
+        Interact = "Execute",
+        Callback = function()
+            SafeExecute(script.name, script.script)
+        end
+    })
+end
+
+-- Game detection
+local gameInfo = {
+    Name = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
+    PlaceId = game.PlaceId,
+    PlayersCount = #game:GetService("Players"):GetPlayers(),
+    Creator = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Creator.Name
+}
+
+HomeTab:CreateSection("Game Information")
+
+HomeTab:CreateParagraph({
+    Title = "Current Game: " .. gameInfo.Name,
+    Content = "Place ID: " .. gameInfo.PlaceId .. "\nCreator: " .. gameInfo.Creator .. "\nPlayers: " .. gameInfo.PlayersCount
+})
+
+-- Stats section
+HomeTab:CreateSection("Script Hub Statistics")
+
+HomeTab:CreateParagraph({
+    Title = "Script Collection",
+    Content = "Total Scripts: " .. scriptCounts.Total .. "\nAdmin Tools: " .. scriptCounts.Admin .. "\nGUIs: " .. scriptCounts.GUIs .. "\nGuns: " .. scriptCounts.Guns .. "\nFunny: " .. scriptCounts.Funny .. "\nUniversal: " .. scriptCounts.Universal .. "\nGear: " .. scriptCounts.Gear .. "\nCharacter: " .. scriptCounts.Character
+})
+
+-- Quick actions
+HomeTab:CreateSection("Quick Actions")
+
+HomeTab:CreateButton({
+    Name = "Refresh Character",
+    Info = "Refreshes your character to fix issues",
+    Interact = "Execute",
+    Callback = function()
+        local character = LocalPlayer.Character
+        if character then
+            local newCharacter = character:Clone()
+            character:Destroy()
+            newCharacter.Parent = game.Workspace
+            LocalPlayer.Character = newCharacter
+            
+            Rayfield:Notify({
+                Title = "Character Refreshed",
+                Content = "Your character has been refreshed successfully",
+                Duration = 3,
+                Image = 4483362458
+            })
+        end
+    end
+})
+
+HomeTab:CreateButton({
+    Name = "Server Hop",
+    Info = "Join a different server of this game",
+    Interact = "Execute",
+    Callback = function()
+        Rayfield:Notify({
+            Title = "Finding Servers",
+            Content = "Searching for an alternative server...",
+            Duration = 3,
+            Image = 4483362458
+        })
+        
+        local servers = {}
+        local pageSize = 100
+        local httpService = game:GetService("HttpService")
+        local teleportService = game:GetService("TeleportService")
+        
+        local req = httpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=" .. pageSize))
+        for _, server in pairs(req.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                table.insert(servers, server)
+            end
+        end
+        
+        if #servers > 0 then
+            local randomServer = servers[math.random(1, #servers)]
+            teleportService:TeleportToPlaceInstance(game.PlaceId, randomServer.id, LocalPlayer)
+        else
+            Rayfield:Notify({
+                Title = "No Servers Found",
+                Content = "Could not find an alternative server to join.",
+                Duration = 3,
+                Image = 4914902889
+            })
+        end
+    end
+})
+
+HomeTab:CreateButton({
+    Name = "Anti-AFK",
+    Info = "Prevents you from being kicked for inactivity",
+    Interact = "Execute",
+    Callback = function()
+        local antiAFK = game:GetService("VirtualUser")
+        LocalPlayer.Idled:Connect(function()
+            antiAFK:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+            wait(1)
+            antiAFK:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+        end)
+        
+        Rayfield:Notify({
+            Title = "Anti-AFK Enabled",
+            Content = "You will no longer be kicked for inactivity",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+})
+
+UpdateLoadingStatus("Setting up admin tools...", 0.6)
+
+-- Admin Tools Tab
+local AdminSection = AdminTab:CreateSection("Admin Commands & Tools")
+
+CreateEnhancedScriptButton(AdminTab, "Admin GUI", 'game:GetObjects("rbxassetid://166330068")[1].Parent = game.Players.LocalPlayer.PlayerGui', "Basic admin commands GUI", "Admin")
+CreateEnhancedScriptButton(AdminTab, "Ro-Xploit v5", 'loadstring(game:GetObjects("rbxassetid://288646117")[1].Source)()', "Advanced admin exploit with many features", "Admin")
+CreateEnhancedScriptButton(AdminTab, "Ro-Xploit v4", 'loadstring(game:GetObjects("rbxassetid://175137115")[1].Source)()', "Previous version of Ro-Xploit", "Admin")
+CreateEnhancedScriptButton(AdminTab, "Admin with Explorer", 'loadstring(game:GetObjects("rbxassetid://303367841")[1].Source)()', "Admin panel with game explorer", "Admin")
+CreateEnhancedScriptButton(AdminTab, "Khols Admin", 'loadstring(game:GetObjects("rbxassetid://140032330")[1].Source)()', "Popular admin command system", "Admin")
+CreateEnhancedScriptButton(AdminTab, "V3rmillion CMD Bar", 'loadstring(game:GetObjects("rbxassetid://138660278")[1].Source)()', "Command bar from v3rmillion", "Admin")
+CreateEnhancedScriptButton(AdminTab, "C00lest Admin", 'loadstring(game:GetObjects("rbxassetid://295850902")[1].Source)()', "C00lest admin panel", "Admin")
+CreateEnhancedScriptButton(AdminTab, "Explorer GUI", 'loadstring(game:GetObjects("rbxassetid://143125289")[1].Source)()', "Game explorer interface", "Admin")
+CreateEnhancedScriptButton(AdminTab, "Rocky CMD Script", 'loadstring(game:GetObjects("rbxassetid://295850902")[1].Source)()', "Command script system", "Admin")
+CreateEnhancedScriptButton(AdminTab, "BTools", 'game:GetObjects("rbxassetid://161802178")[1].Parent = game.Players.LocalPlayer.Backpack', "Building tools", "Admin")
+CreateEnhancedScriptButton(AdminTab, "BTools GUI", 'loadstring(game:GetObjects("rbxassetid://282948276")[1].Source)()', "Building tools in a GUI", "Admin")
+
+-- Admin Tools Search Section
+AdminTab:CreateSection("Search Admin Tools")
+
+AdminTab:CreateInput({
+    Name = "Search Admin Scripts",
+    PlaceholderText = "Type to search admin tools...",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        if Text and Text ~= "" then
+            local foundAny = false
+            local searchText = Text:lower()
+            
+            -- Search logic would go here in a real implementation
+            -- This is just a placeholder
+            
+            if not foundAny then
+                Rayfield:Notify({
+                    Title = "Search Results",
+                    Content = "No admin tools found matching your search",
+                    Duration = 3,
+                    Image = 4483362458
+                })
+            end
+        end
+    end,
+})
+
+-- UI Scripts Section
+UpdateLoadingStatus("Setting up GUI scripts...", 0.7)
+
+local GuisSection = GuisTab:CreateSection("User Interfaces")
+
+CreateEnhancedScriptButton(GuisTab, "PME's GUI", 'game:GetObjects("rbxassetid://274016211")[1].Parent=game.Players.LocalPlayer.PlayerGui', "PME's interface", "GUI")
+CreateEnhancedScriptButton(GuisTab, "Your Mom GUI", 'loadstring(game:GetObjects("rbxassetid://289110135")[1].Source)()', "Your Mom interface", "GUI")
+CreateEnhancedScriptButton(GuisTab, "Destiny GUI", 'game:GetObjects("rbxassetid://166330068")[1].Parent = game.Players.LocalPlayer.PlayerGui', "Destiny themed interface", "GUI")
+CreateEnhancedScriptButton(GuisTab, "Lubtastic GUI", 'loadstring(game:GetObjects("rbxassetid://291193206")[1].Source)("Red")', "Lubtastic interface (Red)", "GUI")
+CreateEnhancedScriptButton(GuisTab, "Colorful GUI", 'game:GetObjects("rbxassetid://147874307")[1].Parent = game.Players.LocalPlayer.PlayerGui', "6-Star colorful interface", "GUI")
+CreateEnhancedScriptButton(GuisTab, "New c00lgui Reborn", 'loadstring(Game:GetObjects("rbxassetid://166327202")[1].Source)()', "Reborn version of c00lgui", "GUI")
+CreateEnhancedScriptButton(GuisTab, "ASGui Alpha", 'game:GetObjects("rbxassetid://174700309")[1].Parent=game.Players.LocalPlayer.PlayerGui', "AS GUI Alpha version", "GUI")
+CreateEnhancedScriptButton(GuisTab, "Really Nice GUI", 'game:GetObjects("rbxassetid://173632133")[1].Parent = game.Players.LocalPlayer.PlayerGui', "Really nice looking UI", "GUI")
+CreateEnhancedScriptButton(GuisTab, "Pepe GUI", 'loadstring(Game:GetObjects("rbxassetid://277881926")[1].Source)()', "Pepe themed interface", "GUI")
+CreateEnhancedScriptButton(GuisTab, "DA GUI", 'loadstring(game:GetObjects("rbxassetid://82099820")[1]:children()[1].Source)()', "DA interface", "GUI")
+CreateEnhancedScriptButton(GuisTab, "SDF GUI", 'game:GetObjects("rbxassetid://270455678")[1].Parent = game.Players.LocalPlayer.PlayerGui', "SDF interface", "GUI")
+CreateEnhancedScriptButton(GuisTab, "Kappa GUI", 'game:GetObjects("rbxassetid://275984240")[1].Parent=game.Players.LocalPlayer.PlayerGui', "Kappa themed interface", "GUI")
+CreateEnhancedScriptButton(GuisTab, "Doge GUI", 'loadstring(game:GetObjects("rbxassetid://166686761")[1].Source)()', "Doge meme GUI", "GUI")
+CreateEnhancedScriptButton(GuisTab, "MLG GUI", 'str_srce = "169947232" loadstring(game:GetObjects("rbxassetid://"..str_srce)[1].Source)()', "MLG themed gear giver", "GUI")
+CreateEnhancedScriptButton(GuisTab, "PhantomX", 'loadstring(game:GetObjects("rbxassetid://296648575")[1].Source)()', "PhantomX interface", "GUI")
+CreateEnhancedScriptButton(GuisTab, "C00lgui GREEN V4", 'loadstring(game:GetObjects("rbxassetid://157645868")[1].Source)()', "C00lgui GREEN V4 with explorer", "GUI")
+
+-- Guns section
+UpdateLoadingStatus("Setting up weapon scripts...", 0.75)
+
+local GunsSection = GunsTab:CreateSection("Firearms & Weapons")
+
+CreateEnhancedScriptButton(GunsTab, "AK-47", 'game:GetObjects("rbxassetid://149948769")[1].Parent=game.Players.LocalPlayer.Backpack', "Classic AK-47 rifle", "Gun")
+CreateEnhancedScriptButton(GunsTab, "Desert Eagle", 'game:GetObjects("rbxassetid//275107258")[1].Parent=game.Players.LocalPlayer.Backpack', "Desert Eagle handgun", "Gun")
+CreateEnhancedScriptButton(GunsTab, "Glock-18", 'game:GetObjects("rbxassetid://260247137")[1].Parent=game.Players.LocalPlayer.Backpack', "Glock-18 pistol", "Gun")
+CreateEnhancedScriptButton(GunsTab, "USAS-12 Shotgun", 'game:GetObjects("rbxassetid://260256527")[1].Parent=game.Players.LocalPlayer.Backpack', "USAS-12 automatic shotgun", "Gun")
+CreateEnhancedScriptButton(GunsTab, "M4A1", 'game:GetObjects("rbxassetid://258725147")[1].Parent=game.Players.LocalPlayer.Backpack', "M4A1 assault rifle", "Gun")
+CreateEnhancedScriptButton(GunsTab, "Barrett .50", 'game:GetObjects("rbxassetid://263853172")[1].Parent=game.Players.LocalPlayer.Backpack', "Barrett M82A1 .50 cal sniper", "Gun")
+CreateEnhancedScriptButton(GunsTab, "M60", 'game:GetObjects("rbxassetid://264021189")[1].Parent=game.Players.LocalPlayer.Backpack', "M60 machine gun", "Gun")
+CreateEnhancedScriptButton(GunsTab, "Sniper", 'game:GetObjects("rbxassetid://77429111")[1].Parent=game.Players.LocalPlayer.Backpack', "Standard sniper rifle", "Gun")
+CreateEnhancedScriptButton(GunsTab, "SVD Dragunov", 'game:GetObjects("rbxassetid://270787558")[1].Parent=game.Players.LocalPlayer.Backpack', "Dragunov SVD sniper", "Gun")
+CreateEnhancedScriptButton(GunsTab, "Thompson", 'game:GetObjects("rbxassetid://259737822")[1].Parent=game.Players.LocalPlayer.Backpack', "Thompson M1921 submachine gun", "Gun")
+CreateEnhancedScriptButton(GunsTab, "MG-42", 'game:GetObjects("rbxassetid://259929702")[1].Parent=game.Players.LocalPlayer.Backpack', "MG-42 machine gun", "Gun")
+CreateEnhancedScriptButton(GunsTab, "Vector SMG", 'game:GetObjects("rbxassetid://263915140")[1].Parent=game.Players.LocalPlayer.Backpack', "Vector submachine gun", "Gun")
+CreateEnhancedScriptButton(GunsTab, "Hand Minigun", 'game:GetObjects("rbxassetid://182126824")[1].Parent=game.Players.LocalPlayer.Backpack', "Freaky hand minigun", "Gun")
+
+-- Add Gun Modifiers section
+GunsTab:CreateSection("Gun Modifiers")
+
+GunsTab:CreateToggle({
+    Name = "Infinite Ammo",
+    Info = "Never run out of ammo with any gun",
+    CurrentValue = false,
+    Flag = "InfiniteAmmoToggle",
+    Callback = function(Value)
+        -- Setup infinite ammo script
+        if Value then
+            _G.infiniteAmmoLoop = RunService.Heartbeat:Connect(function()
+                for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+                    if tool:IsA("Tool") and tool:FindFirstChild("Ammo") then
+                        tool.Ammo.Value = tool.Ammo.MaxValue
+                    end
+                end
+                
+                if LocalPlayer.Character then
+                    for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
+                        if tool:IsA("Tool") and tool:FindFirstChild("Ammo") then
+                            tool.Ammo.Value = tool.Ammo.MaxValue
+                        end
+                    end
+                end
+            end)
+            
+            Rayfield:Notify({
+                Title = "Infinite Ammo Enabled",
+                Content = "Your guns now have unlimited ammunition",
+                Duration = 3,
+                Image = 4483362458
+            })
+        else
+            if _G.infiniteAmmoLoop then
+                _G.infiniteAmmoLoop:Disconnect()
+                _G.infiniteAmmoLoop = nil
+            end
+            
+            Rayfield:Notify({
+                Title = "Infinite Ammo Disabled",
+                Content = "Infinite ammo has been turned off",
+                Duration = 3,
+                Image = 4483362458
+            })
+        end
+    end
+})
+
+GunsTab:CreateToggle({
+    Name = "No Recoil",
+    Info = "Removes recoil from guns for better accuracy",
+    CurrentValue = false,
+    Flag = "NoRecoilToggle",
+    Callback = function(Value)
+        -- Setup no recoil script
+        _G.noRecoil = Value
+        
+        if Value then
+            -- Create hook for new guns
+            _G.noRecoilConnection = LocalPlayer.Backpack.ChildAdded:Connect(function(tool)
+                if tool:IsA("Tool") then
+                    task.wait()
+                    if tool:FindFirstChild("RecoilMod") then
+                        tool.RecoilMod.Value = 0
+                    end
+                    
+                    -- Look for recoil scripts
+                    for _, obj in pairs(tool:GetDescendants()) do
+                        if obj:IsA("Script") and (obj.Name:lower():find("recoil") or obj.Name:lower():find("spread")) then
+                            obj.Disabled = true
+                        end
+                    end
+                end
+            end)
+            
+            -- Apply to existing guns
+            for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+                if tool:IsA("Tool") then
+                    if tool:FindFirstChild("RecoilMod") then
+                        tool.RecoilMod.Value = 0
+                    end
+                    
+                    -- Look for recoil scripts
+                    for _, obj in pairs(tool:GetDescendants()) do
+                        if obj:IsA("Script") and (obj.Name:lower():find("recoil") or obj.Name:lower():find("spread")) then
+                            obj.Disabled = true
+                        end
+                    end
+                end
+            end
+            
+            Rayfield:Notify({
+                Title = "No Recoil Enabled",
+                Content = "Recoil has been removed from your weapons",
+                Duration = 3,
+                Image = 4483362458
+            })
+        else
+            if _G.noRecoilConnection then
+                _G.noRecoilConnection:Disconnect()
+                _G.noRecoilConnection = nil
+            end
+            
+            Rayfield:Notify({
+                Title = "No Recoil Disabled",
+                Content = "Recoil settings have been restored",
+                Duration = 3,
+                Image = 4483362458
+            })
+        end
+    end
+})
+
+-- Funny Items section
+UpdateLoadingStatus("Setting up fun scripts...", 0.8)
+
+local FunnySection = FunnyTab:CreateSection("Fun & Meme Items")
+
+CreateEnhancedScriptButton(FunnyTab, "MLG Motorcycle", 'game:GetObjects("rbxassetid://169966315")[1].Parent=game.Players.LocalPlayer.Backpack', "MLG themed motorcycle", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Illuminati Tool", 'game:GetObjects("rbxassetid://169933873")[1].Parent=game.Players.LocalPlayer.Backpack', "Illuminati FX tool", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Green Fire Sword", 'game:GetObjects("rbxassetid://169934427")[1].Parent=game.Players.LocalPlayer.Backpack', "420 sword with green fire", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Rainbow Road", 'game:GetObjects("rbxassetid://277054866")[1].Parent = game.Players.LocalPlayer.Backpack', "Creates a rainbow path", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Pink Mega Gun", 'game:GetObjects("rbxassetid://138549050")[1].Parent=game.Players.LocalPlayer.Backpack', "Troll pink huge mega gun", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Ultimate Power", 'game:GetObjects("rbxassetid://99824252")[1].Parent=game.Players.LocalPlayer.Backpack', "Ultimate power tool", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "MLG Banana Bag", 'game:GetObjects("rbxassetid://169933956")[1].Parent=game.Players.LocalPlayer.Backpack', "MLG themed banana bag", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Mountain Dew", 'game:GetObjects("rbxassetid://169934896")[1].Parent=game.Players.LocalPlayer.Backpack', "Mountain Dew can item", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Ultimate Dance", 'game:GetObjects("rbxassetid://175012813")[1].Parent = game.Players.LocalPlayer.PlayerGui', "Ultimate dance animations", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Dance GUI", 'game:GetObjects("rbxassetid://175460237")[1].Parent = game.Players.LocalPlayer.PlayerGui', "Dance GUI with animations", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Cig Tool", 'game:GetObjects("rbxassetid://69135805")[1].Parent=game.Players.LocalPlayer.Backpack', "Cigarette tool", "Funny")
+CreateEnhancedScriptButton(FunnyTab, "Bomb", 'game:GetObjects("rbxassetid://287003625")[1].Parent = game.Players.LocalPlayer.Backpack', "Bomb weapon", "Funny")
+
+-- Fun Animation Controller
+FunnyTab:CreateSection("Animation Controller")
+
+local animationPresets = {
+    {name = "Ninja Run", id = 656118852},
+    {name = "Zombie Walk", id = 616163682},
+    {name = "Confident Walk", id = 1069977950},
+    {name = "Trolling Walk", id = 754656200},
+    {name = "Floss Dance", id = 5917459365},
+    {name = "Gangnam Style", id = 1265303989},
+    {name = "Dab", id = 4155807024},
+    {name = "Helicopter", id = 754658275},
+    {name = "Hype Dance", id = 5915782084}
+}
+
+-- Animation player
+local function PlayAnimation(id)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        if _G.CurrentAnimation then
+            _G.CurrentAnimation:Stop()
+        end
+        
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://" .. id
+        _G.CurrentAnimation = LocalPlayer.Character.Humanoid:LoadAnimation(anim)
+        _G.CurrentAnimation:Play()
+        
+        -- Set looped
+        _G.CurrentAnimation.Looped = true
+    end
+end
+
+-- Create dropdown for animations
+local animNames = {}
+for _, anim in ipairs(animationPresets) do
+    table.insert(animNames, anim.name)
+end
+
+FunnyTab:CreateDropdown({
+    Name = "Select Animation",
+    Options = animNames,
+    CurrentOption = "",
+    Flag = "AnimationDropdown",
+    Callback = function(Option)
+        for _, anim in ipairs(animationPresets) do
+            if anim.name == Option then
+                PlayAnimation(anim.id)
+                break
+            end
+        end
+    end,
+})
+
+-- Button to stop animations
+FunnyTab:CreateButton({
+    Name = "Stop Animation",
+    Info = "Stops any currently playing animation",
+    Interact = "Execute",
+    Callback = function()
+        if _G.CurrentAnimation then
+            _G.CurrentAnimation:Stop()
+            _G.CurrentAnimation = nil
+        end
+    end
+})
+
+-- Universal Scripts section
+UpdateLoadingStatus("Setting up universal scripts...", 0.85)
+
+local UniversalSection = UniversalTab:CreateSection("General Purpose Scripts")
+
+CreateEnhancedScriptButton(UniversalTab, "Telekinesis", 'loadstring(game:GetObjects("rbxassetid://287147018")[1].Source)()', "Move objects with your mind", "Universal")
+CreateEnhancedScriptButton(UniversalTab, "The Force", 'game:GetObjects("rbxassetid://127298157")[1].Parent=game.Players.LocalPlayer.Backpack', "Use the Force powers", "Universal")
+CreateEnhancedScriptButton(UniversalTab, "iOrb", 'loadstring(game:GetObjects("rbxassetid://100205720")[1].Source)()', "Magical orb tool", "Universal")
+CreateEnhancedScriptButton(UniversalTab, "One Tool", 'loadstring(game:GetObjects("rbxassetid://165504167")[1].Source)()', "One tool to rule them all", "Universal")
+CreateEnhancedScriptButton(UniversalTab, "Ban Katana", 'game:GetObjects("rbxassetid://137423945")[1].Parent=game.Players.LocalPlayer.Backpack', "Ban katana weapon", "Universal")
+CreateEnhancedScriptButton(UniversalTab, "Lightning", 'game:GetObjects("rbxassetid://43703853")[1].Parent=game.Players.LocalPlayer.Backpack', "Lightning god powers", "Universal")
+CreateEnhancedScriptButton(UniversalTab, "Scythe", 'loadstring(game:GetObjects("rbxassetid://112829174")[1].Source)()', "Scythe weapon", "Universal")
+CreateEnhancedScriptButton(UniversalTab, "Explorer", 'str_srce = "169942111" loadstring(game:GetObjects("rbxassetid://"..str_srce)[1].Source)()', "Game explorer", "Universal")
+CreateEnhancedScriptButton(UniversalTab, "Hung999", 'loadstring(game:GetObjects("rbxassetid://157387254")[1].Source)()', "Hung999 script pack", "Universal")
+CreateEnhancedScriptButton(UniversalTab, "Apoc Rising Hack", 'loadstring(game:GetObjects("rbxassetid://291556436")[1].Source)()', "Apocalypse Rising hack menu", "Universal")
+
+-- Universal Utility Section
+UniversalTab:CreateSection("Universal Utilities")
+
+-- ESP Player Tracker
+UniversalTab:CreateToggle({
+    Name = "Player ESP",
+    Info = "See players through walls with nametags",
+    CurrentValue = false,
+    Flag = "PlayerESP",
+    Callback = function(Value)
+        if Value then
+            -- Setup ESP
+            _G.espEnabled = true
+            
+            -- Create ESP function
+            local function createESP(player)
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "ESPHighlight"
+                highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                highlight.FillTransparency = 0.5
+                highlight.OutlineTransparency = 0
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                
+                local billboardGui = Instance.new("BillboardGui")
+                billboardGui.Name = "ESPTag"
+                billboardGui.Size = UDim2.new(0, 200, 0, 50)
+                billboardGui.StudsOffset = Vector3.new(0, 3, 0)
+                billboardGui.AlwaysOnTop = true
+                billboardGui.LightInfluence = 0
+                
+                local nameLabel = Instance.new("TextLabel")
+                nameLabel.Name = "PlayerName"
+                nameLabel.Size = UDim2.new(1, 0, 1, 0)
+                nameLabel.BackgroundTransparency = 1
+                nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                nameLabel.TextStrokeTransparency = 0
+                nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                nameLabel.Font = Enum.Font.GothamBold
+                nameLabel.TextSize = 14
+                nameLabel.Text = player.Name
+                nameLabel.Parent = billboardGui
+                
+                -- Wait for character to load
+                local function onCharacterAdded(character)
+                    if not character then return end
+                    
+                    -- Add highlight
+                    highlight.Parent = character
+                    
+                    -- Add billboard
+                    billboardGui.Parent = character:WaitForChild("Head")
+                    
+                    -- Add distance updating
+                    if _G.espDistanceLoop then
+                        _G.espDistanceLoop:Disconnect()
+                    end
+                    
+                    _G.espDistanceLoop = RunService.RenderStepped:Connect(function()
+                        for _, p in pairs(Players:GetPlayers()) do
+                            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character.Head:FindFirstChild("ESPTag") then
+                                local distance = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                                p.Character.Head.ESPTag.PlayerName.Text = p.Name .. " [" .. math.floor(distance) .. "m]"
+                            end
+                        end
+                    end)
+                end
+                
+                -- Handle character added
+                if player.Character then
+                    onCharacterAdded(player.Character)
+                end
+                
+                player.CharacterAdded:Connect(onCharacterAdded)
+            end
+            
+            -- Apply ESP to all players
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    createESP(player)
+                end
+            end
+            
+            -- Connect to PlayerAdded event
+            _G.playerAddedConnection = Players.PlayerAdded:Connect(function(player)
+                if player ~= LocalPlayer then
+                    createESP(player)
+                end
+            end)
+            
+            Rayfield:Notify({
+                Title = "ESP Enabled",
+                Content = "You can now see players through walls",
+                Duration = 3,
+                Image = 4483362458
+            })
+        else
+            _G.espEnabled = false
+            
+            -- Disconnect events
+            if _G.playerAddedConnection then
+                _G.playerAddedConnection:Disconnect()
+                _G.playerAddedConnection = nil
+            end
+            
+            if _G.espDistanceLoop then
+                _G.espDistanceLoop:Disconnect()
+                _G.espDistanceLoop = nil
+            end
+            
+            -- Remove ESP from players
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character then
+                    if player.Character:FindFirstChild("ESPHighlight") then
+                        player.Character.ESPHighlight:Destroy()
+                    end
+                    
+                    if player.Character:FindFirstChild("Head") and player.Character.Head:FindFirstChild("ESPTag") then
+                        player.Character.Head.ESPTag:Destroy()
+                    end
+                end
+            end
+            
+            Rayfield:Notify({
+                Title = "ESP Disabled",
+                Content = "Player ESP has been turned off",
+                Duration = 3,
+                Image = 4483362458
+            })
+        end
+    end
+})
+
+-- Gear Scripts section
+UpdateLoadingStatus("Setting up gear scripts...", 0.9)
+
+local GearSection = GearTab:CreateSection("Equipment & Items")
+
+CreateEnhancedScriptButton(GearTab, "Ban Katana", 'game:GetObjects("rbxassetid://137423945")[1].Parent=game.Players.LocalPlayer.Backpack', "Ban katana weapon", "Gear")
+CreateEnhancedScriptButton(GearTab, "Lightning", 'game:GetObjects("rbxassetid://43703853")[1].Parent=game.Players.LocalPlayer.Backpack', "Lightning powers", "Gear")
+CreateEnhancedScriptButton(GearTab, "Rainbow Road", 'game:GetObjects("rbxassetid://277054866")[1].Parent = game.Players.LocalPlayer.Backpack', "Creates a rainbow path", "Gear")
+CreateEnhancedScriptButton(GearTab, "Golf Club", 'game:GetObjects("rbxassetid://43854655")[1].Parent=game.Players.LocalPlayer.Backpack', "Golf club weapon", "Gear")
+CreateEnhancedScriptButton(GearTab, "Force Power", 'game:GetObjects("rbxassetid://127298157")[1].Parent=game.Players.LocalPlayer.Backpack', "Force powers", "Gear")
+CreateEnhancedScriptButton(GearTab, "Green Fire Sword", 'game:GetObjects("rbxassetid://169934427")[1].Parent=game.Players.LocalPlayer.Backpack', "420 sword with green fire", "Gear")
+CreateEnhancedScriptButton(GearTab, "Orb", 'game:GetObjects("rbxassetid://100205720")[1].Parent=game.Players.LocalPlayer.Backpack', "Magical orb", "Gear")
+CreateEnhancedScriptButton(GearTab, "God Tool", 'game:GetObjects("rbxassetid://99824252")[1].Parent=game.Players.LocalPlayer.Backpack', "God powers tool", "Gear")
+CreateEnhancedScriptButton(GearTab, "Pink Mega Gun", 'game:GetObjects("rbxassetid://138549050")[1].Parent=game.Players.LocalPlayer.Backpack', "Pink mega gun", "Gear")
+CreateEnhancedScriptButton(GearTab, "Euphoric Fedora", 'game:GetObjects("rbxassetid://169934817")[1].Parent=game.Players.LocalPlayer.Backpack', "Euphoric fedora hat", "Gear")
+CreateEnhancedScriptButton(GearTab, "Book", 'game:GetObjects("rbxassetid://141979099")[1].Parent=game.Players.LocalPlayer.Backpack', "Book item", "Gear")
+
+-- Gear Manager Section
+GearTab:CreateSection("Gear Manager")
+
+local inventoryDisplayed = false
+local inventoryItems = {}
+
+-- Display current inventory
+GearTab:CreateButton({
+    Name = "Refresh Inventory",
+    Info = "Shows all tools in your backpack",
+    Interact = "Execute",
+    Callback = function()
+        -- Clear previous items
+        inventoryItems = {}
+        
+        -- Get all tools in backpack
+        for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+            if tool:IsA("Tool") then
+                table.insert(inventoryItems, tool.Name)
+            end
+        end
+        
+        -- Get all tools being held
+        if LocalPlayer.Character then
+            for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
+                if tool:IsA("Tool") then
+                    table.insert(inventoryItems, tool.Name)
+                end
+            end
+        end
+        
+        if #inventoryItems > 0 then
+            local itemsList = table.concat(inventoryItems, "\n• ")
+            Rayfield:Notify({
+                Title = "Current Inventory (" .. #inventoryItems .. " items)",
+                Content = "• " .. itemsList,
+                Duration = 5,
+                Image = 4483362458
+            })
+        else
+            Rayfield:Notify({
+                Title = "Empty Inventory",
+                Content = "You don't have any tools in your backpack.",
+                Duration = 3,
+                Image = 4483362458
+            })
+        end
+    end
+})
+
+-- Equip all button
+GearTab:CreateButton({
+    Name = "Equip All Tools",
+    Info = "Equips all tools at once",
+    Interact = "Execute",
+    Callback = function()
+        for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+            if tool:IsA("Tool") then
+                tool.Parent = LocalPlayer.Character
+            end
+        end
+    end
+})
+
+-- Drop all button
+GearTab:CreateButton({
+    Name = "Drop All Tools",
+    Info = "Drops all your tools on the ground",
+    Interact = "Execute",
+    Callback = function()
+        -- First equip all tools
+        for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+            if tool:IsA("Tool") then
+                tool.Parent = LocalPlayer.Character
+            end
+        end
+        
+        -- Then drop them
+        if LocalPlayer.Character then
+            for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
+                if tool:IsA("Tool") then
+                    tool.Parent = game.Workspace
+                end
+            end
+        end
+    end
+})
+
+-- Character section
+UpdateLoadingStatus("Setting up character features...", 0.95)
+
+local CharacterSection = CharacterTab:CreateSection("Character Modifications")
+
+CharacterTab:CreateButton({
+    Name = "Swimming Mode",
+    Info = "Make your character swim through air",
+    Interact = 'Activate',
+    Callback = function()
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(4)
+        
+        Rayfield:Notify({
+            Title = "Swimming Mode Activated",
+            Content = "You're now swimming through the air",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+})
+
+CharacterTab:CreateButton({
+    Name = "Glide Mode",
+    Info = "Make your character glide through air",
+    Interact = 'Activate',
+    Callback = function()
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(12)
+        
+        Rayfield:Notify({
+            Title = "Glide Mode Activated",
+            Content = "You're now gliding through the air",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+})
+
+CharacterTab:CreateButton({
+    Name = "Noclip (Temporary)",
+    Info = "Pass through objects briefly",
+    Interact = 'Activate',
+    Callback = function()
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(11)
+        
+        Rayfield:Notify({
+            Title = "Noclip Activated",
+            Content = "Temporary noclip mode enabled",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+})
+
+CharacterTab:CreateButton({
+    Name = "Super Jump",
+    Info = "Enable super jump abilities",
+    Interact = 'Activate',
+    Callback = function()
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(13)
+        
+        Rayfield:Notify({
+            Title = "Super Jump Activated",
+            Content = "Super jump mode enabled",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+})
+
+CharacterTab:CreateButton({
+    Name = "Airwalk",
+    Info = "Walk on air like it's solid ground",
+    Interact = 'Activate',
+    Callback = function()
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(10)
+        
+        Rayfield:Notify({
+            Title = "Airwalk Activated",
+            Content = "You can now walk on air",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+})
+
+CharacterTab:CreateButton({
+    Name = "Ragdoll",
+    Info = "Make your character ragdoll",
+    Interact = 'Activate',
+    Callback = function()
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(1)
+        
+        Rayfield:Notify({
+            Title = "Ragdoll Activated",
+            Content = "Your character is now ragdolled",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+})
+
+CharacterTab:CreateButton({
+    Name = "Reset Character State",
+    Info = "Return to normal character state",
+    Interact = 'Activate',
+    Callback = function()
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(5)
+        
+        Rayfield:Notify({
+            Title = "Character Reset",
+            Content = "Your character state has been reset",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+})
+
+CreateEnhancedScriptButton(CharacterTab, "Fly Script", 'loadstring(Game:GetObjects("rbxassetid://127983023")[1].Source)()', "Let your character fly", "Character")
+CreateEnhancedScriptButton(CharacterTab, "Telekinesis", 'loadstring(game:GetObjects("rbxassetid://287147018")[1].Source)()', "Move objects with your mind", "Character")
+
+-- Advanced Noclip toggle with visual effects
+local noClipEnabled = false
+local noClipConnection
