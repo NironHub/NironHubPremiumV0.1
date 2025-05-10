@@ -1184,6 +1184,55 @@ CharacterTab:CreateButton({
 CreateEnhancedScriptButton(CharacterTab, "Fly Script", 'loadstring(Game:GetObjects("rbxassetid://127983023")[1].Source)()', "Let your character fly", "Character")
 CreateEnhancedScriptButton(CharacterTab, "Telekinesis", 'loadstring(game:GetObjects("rbxassetid://287147018")[1].Source)()', "Move objects with your mind", "Character")
 
--- Advanced Noclip toggle with visual effects
-local noClipEnabled = false
-local noClipConnection
+local MarketplaceService = game:GetService("MarketplaceService")
+local DataStoreService = game:GetService("DataStoreService")
+local keyStore = DataStoreService:GetDataStore("UniquePlayerKeys")
+
+local productId = 12345678  -- Replace with your Developer Product ID
+
+-- Function to check if the player has purchased the product
+local function hasPurchasedProduct(player)
+    local success, result = pcall(function()
+        return MarketplaceService:PlayerOwnsAsset(player, productId)
+    end)
+    if success then
+        return result
+    else
+        warn("Error checking purchase for " .. player.Name .. ": " .. result)
+        return false
+    end
+end
+
+-- Function to generate a unique key
+local function generateUniqueKey(player)
+    local userId = player.UserId
+    local randomNum = math.random(1000, 9999)
+    local uniqueKey = tostring(userId) .. "-" .. tostring(randomNum)
+    return uniqueKey
+end
+
+-- Function to save the generated key
+local function saveGeneratedKey(player, key)
+    local success, error = pcall(function()
+        keyStore:SetAsync(player.UserId, key)
+    end)
+    if not success then
+        warn("Failed to save key for " .. player.Name .. ": " .. error)
+    end
+end
+
+-- Key Generation Button
+local generateKeyButton = MainTab:CreateButton({
+    Name = "Generate New Key",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        -- Check if the player has purchased the Developer Product
+        if hasPurchasedProduct(player) then
+            local newKey = generateUniqueKey(player)
+            saveGeneratedKey(player, newKey)
+            print("Your new key: " .. newKey)
+        else
+            print("You need to purchase the Developer Product to generate a key.")
+        end
+    end,
+})
